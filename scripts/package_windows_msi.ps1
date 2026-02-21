@@ -9,13 +9,29 @@ if ([string]::IsNullOrWhiteSpace($AppVersion)) {
 }
 $AppVersion = $AppVersion.TrimStart("v")
 
+$PackageVersion = $AppVersion
+if ([string]::IsNullOrWhiteSpace($PackageVersion)) {
+  $PackageVersion = "0.1.0"
+}
+$PackageVersion = $PackageVersion -replace '[^0-9A-Za-z._-]', '-'
+
+$ProductVersion = "0.1.0"
+if ($AppVersion -match '^(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?(?:[-+].*)?$') {
+  $ProductVersion = "$($Matches[1]).$($Matches[2]).$($Matches[3])"
+  if ($Matches[4]) {
+    $ProductVersion = "$ProductVersion.$($Matches[4])"
+  }
+} else {
+  Write-Host "INFO: APP_VERSION '$AppVersion' is not a valid MSI product version. Falling back to $ProductVersion"
+}
+
 $RootDir = (Resolve-Path "$PSScriptRoot\..").Path
 $AppName = "ConfigSanitizer"
 $DistDir = Join-Path $RootDir "dist"
 $BuildDir = Join-Path $RootDir "build"
 $ReleaseDir = Join-Path $RootDir "release"
 $ExePath = Join-Path $DistDir "$AppName.exe"
-$MsiPath = Join-Path $ReleaseDir "$AppName-$AppVersion-windows-x64.msi"
+$MsiPath = Join-Path $ReleaseDir "$AppName-$PackageVersion-windows-x64.msi"
 $WxsPath = Join-Path $RootDir "packaging\windows\ConfigSanitizer.wxs"
 
 if (Test-Path $DistDir) { Remove-Item -Path $DistDir -Recurse -Force }
@@ -67,10 +83,24 @@ if (-not (Test-Path $wixPath)) {
   throw "WiX CLI not found at $wixPath"
 }
 
+function Ensure-WixExtension([string]$ExtensionId) {
+  Write-Host "INFO: Installing WiX extension: $ExtensionId"
+  & $wixPath extension add --global $ExtensionId
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "INFO: Retrying WiX extension install without --global"
+    & $wixPath extension add $ExtensionId
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host "WARN: Failed to pre-install WiX extension '$ExtensionId'. Continuing to WiX build."
+    }
+  }
+}
+
+Ensure-WixExtension -ExtensionId "WixToolset.UI.wixext"
+
 & $wixPath build `
   $WxsPath `
   -dExecutablePath=$ExePath `
-  -dProductVersion=$AppVersion `
+  -dProductVersion=$ProductVersion `
   -ext WixToolset.UI.wixext `
   -o $MsiPath
 
