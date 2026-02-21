@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Config Sanitizer
+Comment=Sanitize configuration files
+Exec=ConfigSanitizer
+Icon=config-sanitizer
+Terminal=false
+Categories=Utility;Security;

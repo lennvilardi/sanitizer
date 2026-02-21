@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="sanitize minimal icon">
+  <rect x="24" y="24" width="464" height="464" rx="88" fill="#FFFFFF" />
+  <rect x="24" y="24" width="464" height="464" rx="88" fill="none" stroke="#DCE2E8" stroke-width="2" />
+  <polygon points="390.89,200.13 390.89,311.87 311.87,390.89 200.13,390.89 121.11,311.87 121.11,200.13 200.13,121.11 311.87,121.11" fill="#163A55" />
+  <polygon points="360.40,212.76 360.40,299.24 299.24,360.40 212.76,360.40 151.60,299.24 151.60,212.76 212.76,151.60 299.24,151.60" fill="#FFFFFF" />
+  <rect x="184" y="180" width="148" height="128" rx="14" fill="#1A3B56" />
+  <polygon points="302,180 332,210 302,210" fill="#E8EEF2" />
+  <rect x="202" y="218" width="110" height="26" rx="8" fill="#FFFFFF" />
+  <path d="M213 226 L223 236 M223 226 L213 236" stroke="#E93B3C" stroke-width="3" stroke-linecap="round" />
+  <circle cx="238" cy="231" r="4" fill="#22CC71" />
+  <rect x="248" y="227" width="44" height="8" rx="4" fill="#8EA1B1" />
+  <path d="M282 286 L295 298 L316 276" fill="none" stroke="#22CC71" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

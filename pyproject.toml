@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "config-sanitizer-tool"
+version = "0.1.0"
+description = "Config sanitizer (CLI + GUI) for YAML/text files"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Andrevillien" }]
+dependencies = []
+[project.optional-dependencies]
+packaging = ["pyinstaller>=6.0", "build>=1.2.1", "twine>=5.1.1"]
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Environment :: Console",
+  "Environment :: X11 Applications :: Tk",
+  "Topic :: Security",
+]
+
+[project.scripts]
+sanitizer-cli = "sanitize:main"
+sanitizer-gui = "sanitize_gui:main"
+
+[tool.setuptools]
+py-modules = ["sanitize", "sanitize_gui", "sanitizer_core"]
