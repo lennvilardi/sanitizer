@@ -2,7 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_NAME="ConfigSanitizer"
+APP_NAME="Sanitizer"
+APP_BUNDLE_ID="com.andrevillien.sanitizer"
 VERSION_RAW="${APP_VERSION:-0.1.0}"
 VERSION="${VERSION_RAW#v}"
 DIST_DIR="${ROOT_DIR}/dist"
@@ -10,15 +11,38 @@ BUILD_DIR="${ROOT_DIR}/build"
 RELEASE_DIR="${ROOT_DIR}/release"
 APP_PATH="${DIST_DIR}/${APP_NAME}.app"
 DMG_PATH="${RELEASE_DIR}/${APP_NAME}-${VERSION}-macos.dmg"
+ICONSET_DIR="${BUILD_DIR}/${APP_NAME}.iconset"
+ICON_PATH="${BUILD_DIR}/${APP_NAME}.icns"
+ICON_SOURCE="${ROOT_DIR}/assets/logo/png/dark/sanitize-logo-dark-1024.png"
 
 rm -rf "${DIST_DIR}" "${BUILD_DIR}" "${ROOT_DIR}/${APP_NAME}.spec"
 mkdir -p "${RELEASE_DIR}"
+
+if [[ ! -f "${ICON_SOURCE}" ]]; then
+  echo "ERROR: expected icon source not found: ${ICON_SOURCE}" >&2
+  exit 2
+fi
+
+mkdir -p "${ICONSET_DIR}"
+sips -z 16 16 "${ICON_SOURCE}" --out "${ICONSET_DIR}/icon_16x16.png" >/dev/null
+sips -z 32 32 "${ICON_SOURCE}" --out "${ICONSET_DIR}/icon_16x16@2x.png" >/dev/null
+sips -z 32 32 "${ICON_SOURCE}" --out "${ICONSET_DIR}/icon_32x32.png" >/dev/null
+sips -z 64 64 "${ICON_SOURCE}" --out "${ICONSET_DIR}/icon_32x32@2x.png" >/dev/null
+sips -z 128 128 "${ICON_SOURCE}" --out "${ICONSET_DIR}/icon_128x128.png" >/dev/null
+sips -z 256 256 "${ICON_SOURCE}" --out "${ICONSET_DIR}/icon_128x128@2x.png" >/dev/null
+sips -z 256 256 "${ICON_SOURCE}" --out "${ICONSET_DIR}/icon_256x256.png" >/dev/null
+sips -z 512 512 "${ICON_SOURCE}" --out "${ICONSET_DIR}/icon_256x256@2x.png" >/dev/null
+sips -z 512 512 "${ICON_SOURCE}" --out "${ICONSET_DIR}/icon_512x512.png" >/dev/null
+cp "${ICON_SOURCE}" "${ICONSET_DIR}/icon_512x512@2x.png"
+iconutil -c icns "${ICONSET_DIR}" -o "${ICON_PATH}"
 
 python -m PyInstaller \
   --noconfirm \
   --clean \
   --name "${APP_NAME}" \
   --windowed \
+  --icon "${ICON_PATH}" \
+  --osx-bundle-identifier "${APP_BUNDLE_ID}" \
   "${ROOT_DIR}/sanitize_gui.py"
 
 if [[ ! -d "${APP_PATH}" ]]; then

@@ -17,7 +17,7 @@ from sanitizer_core import DEFAULT_EXTS, DEFAULT_MAX_SIZE_MB, RedactionConfig, p
 class SanitizerApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
-        self.title("Config Sanitizer")
+        self.title("Sanitizer")
         self.geometry("900x620")
         self.minsize(780, 520)
 
