@@ -106,12 +106,20 @@ function Ensure-WixExtension([string]$ExtensionId, [string]$ExtensionVersion) {
 
 Ensure-WixExtension -ExtensionId "WixToolset.UI.wixext" -ExtensionVersion $WixUiExtensionVersion
 
-& $wixPath build `
-  $WxsPath `
-  -dExecutablePath=$ExePath `
-  -dProductVersion=$ProductVersion `
-  -ext WixToolset.UI.wixext `
-  -o $MsiPath
+$wixArgs = @(
+  "build"
+  $WxsPath
+  "-d"
+  "ExecutablePath=$ExePath"
+  "-d"
+  "ProductVersion=$ProductVersion"
+  "-ext"
+  "WixToolset.UI.wixext"
+  "-o"
+  $MsiPath
+)
+
+& $wixPath @wixArgs
 
 if (-not (Test-Path $MsiPath)) {
   throw "MSI output not found: $MsiPath"
