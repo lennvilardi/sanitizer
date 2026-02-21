@@ -1,5 +1,6 @@
 param(
-  [string]$AppVersion = $env:APP_VERSION
+  [string]$AppVersion = $env:APP_VERSION,
+  [string]$WixUiExtensionVersion = $env:WIX_UI_EXTENSION_VERSION
 )
 
 $ErrorActionPreference = "Stop"
@@ -8,6 +9,9 @@ if ([string]::IsNullOrWhiteSpace($AppVersion)) {
   $AppVersion = "0.1.0"
 }
 $AppVersion = $AppVersion.TrimStart("v")
+if ([string]::IsNullOrWhiteSpace($WixUiExtensionVersion)) {
+  $WixUiExtensionVersion = "6.0.2"
+}
 
 $PackageVersion = $AppVersion
 if ([string]::IsNullOrWhiteSpace($PackageVersion)) {
@@ -77,25 +81,30 @@ function Sign-File([string]$FilePath) {
 
 Sign-File -FilePath $ExePath
 
-# WiX v5 (dotnet tool) builds MSI from the .wxs file.
+# WiX (dotnet tool) builds MSI from the .wxs file.
 $wixPath = Join-Path $env:USERPROFILE ".dotnet\tools\wix.exe"
 if (-not (Test-Path $wixPath)) {
   throw "WiX CLI not found at $wixPath"
 }
 
-function Ensure-WixExtension([string]$ExtensionId) {
-  Write-Host "INFO: Installing WiX extension: $ExtensionId"
-  & $wixPath extension add --global $ExtensionId
+function Ensure-WixExtension([string]$ExtensionId, [string]$ExtensionVersion) {
+  $extensionPackage = $ExtensionId
+  if (-not [string]::IsNullOrWhiteSpace($ExtensionVersion)) {
+    $extensionPackage = "$ExtensionId/$ExtensionVersion"
+  }
+
+  Write-Host "INFO: Installing WiX extension: $extensionPackage"
+  & $wixPath extension add --global $extensionPackage
   if ($LASTEXITCODE -ne 0) {
     Write-Host "INFO: Retrying WiX extension install without --global"
-    & $wixPath extension add $ExtensionId
-    if ($LASTEXITCODE -ne 0) {
-      Write-Host "WARN: Failed to pre-install WiX extension '$ExtensionId'. Continuing to WiX build."
-    }
+    & $wixPath extension add $extensionPackage
+  }
+  if ($LASTEXITCODE -ne 0) {
+    throw "Failed to install WiX extension '$extensionPackage'."
   }
 }
 
-Ensure-WixExtension -ExtensionId "WixToolset.UI.wixext"
+Ensure-WixExtension -ExtensionId "WixToolset.UI.wixext" -ExtensionVersion $WixUiExtensionVersion
 
 & $wixPath build `
   $WxsPath `
