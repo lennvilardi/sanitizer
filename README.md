@@ -1,145 +1,180 @@
-# Config Sanitizer
+# Sanitizer
 
-![Sanitize Logo](assets/sanitize-logo.svg)
+![Sanitizer Logo](assets/sanitize-logo.svg)
 
-Sanitize YAML/text configuration files while keeping the original formatting as much as possible.
+Sanitizer caviarde automatiquement les donnees sensibles d'un fichier de configuration
+avant partage (support, audit, ticketing, documentation).
 
-## Features
+Objectif: partager vite un fichier exploitable, sans exposer de secrets.
 
-- Redacts sensitive keys (`password`, `secret`, `token`, `api_key`, etc.)
-- Redacts token-like values (JWT, long hex/base64, bearer tokens, URL credentials)
-- Redacts private key material and optional certificate/public key data
-- Redacts user-defined domain names (no hardcoded company domain)
-- Provides:
-  - CLI (`sanitizer-cli` / `python sanitize.py`)
-  - GUI (`sanitizer-gui` / `python sanitize_gui.py`)
-- Generates `sanitizer_report.json` with all replacements
+## Pitch
 
-## Install
+Tu selectionnes un fichier.
+Sanitizer genere un fichier `*_sanitized` dans le meme dossier.
+Tu gardes la structure lisible, mais les secrets sont remplaces.
+
+## Ce que l'application fait
+
+- Caviarde les champs sensibles: `password`, `passphrase`, `secret`, `token`, `api_key`, etc.
+- Caviarde les variantes de cles (`dbPassword`, `MY_PASSWORD`, `db.password`, etc.).
+- Caviarde les e-mails.
+- Caviarde les valeurs sensibles detectees par motif (JWT, bearer token, URL avec credentials, longues chaines de secret).
+- Caviarde les blocs de cles privees (PEM et PGP private key block).
+- Caviarde les certificats et cles SSH publiques (options activables/desactivables).
+- Caviarde les domaines que tu choisis (pas de domaine hardcode).
+- Conserve autant que possible le format original (espaces, indentation, commentaires).
+- Affiche un log de remplacement masque (avant/apres) dans le CLI et la GUI.
+
+## Formats pris en charge
+
+- Lignes YAML style `key: value`
+- Lignes type variable d'environnement `KEY=VALUE` (avec ou sans `export`)
+- Paires JSON inline sur une ligne (`{"password":"..."}`)
+- Texte libre (pour certains motifs sensibles comme e-mail, cle privee, etc.)
+
+## Limites a connaitre
+
+- Ce n'est pas une preuve formelle d'absence de secret.
+- Il peut exister des faux positifs/faux negatifs selon tes conventions internes.
+- Les fichiers binaires sont ignores (skipped).
+- Toujours relire la sortie avant diffusion externe.
+
+## Installation
 
 ```bash
 python -m pip install .
 ```
 
-## Usage (CLI)
+Commandes installees:
 
-```bash
-python sanitize.py /path/to/source \
-  --domain example.com \
-  --domain internal.example.com \
-  --out /path/to/output \
-  --verbose
-```
+- `sanitizer-cli`
+- `sanitizer-gui`
 
-You can also pass domains in one argument:
+Tu peux aussi lancer directement:
 
-```bash
-python sanitize.py /path/to/source --domains "example.com,internal.example.com"
-```
+- `python sanitize.py`
+- `python sanitize_gui.py`
 
-Useful flags:
-
-- `--dry-run`: do not write sanitized files, only JSON report
-- `--redact-certs`: redact certificate blocks
-- `--redact-public-keys`: redact SSH public keys
-- `--ext`: custom extensions, example `.yaml,.yml,.env`
-- `--max-size-mb`: skip files larger than the threshold
-
-## Usage (GUI)
+## Utilisation rapide (GUI)
 
 ```bash
 python sanitize_gui.py
 ```
 
-1. Select source directory
-1. Optionally set output directory
-1. Enter domains to redact (`domain1.com,domain2.com`)
-1. Click `Run sanitizer`
+1. Choisir le fichier source.
+2. Laisser/ajuster les domaines a caviarder (optionnel).
+3. Lancer.
+4. Lire les onglets de journal/remplacements.
+5. Recuperer le fichier `*_sanitized` dans le meme dossier que la source.
 
-The GUI works on macOS, Windows, and Linux with Python + Tk installed.
+## Utilisation rapide (CLI)
 
-## Build Desktop Executables
-
-This project includes a PyInstaller builder for GUI executables.
-
-## Logo Variants and Exports
-
-Generate flat-design logo variants and exports:
+Exemple minimal:
 
 ```bash
-python scripts/generate_logo_assets.py
+python sanitize.py /chemin/vers/config.yaml
 ```
 
-Generated files:
-
-- SVG variants: `assets/logo/variants/`
-- PNG exports: `assets/logo/png/<variant>/`
-- ICO exports: `assets/logo/ico/`
-- Windows installer icon: `packaging/assets/config-sanitizer.ico`
-
-Install build dependencies:
+Avec domaines:
 
 ```bash
-python -m pip install .[packaging]
+python sanitize.py /chemin/vers/config.yaml \
+  --domain example.com \
+  --domain internal.local
 ```
 
-Build for your current OS:
+Version compacte:
 
 ```bash
-python scripts/build_executable.py
+python sanitize.py /chemin/vers/config.yaml --domains "example.com,internal.local"
 ```
 
-Output files:
+Options utiles:
 
-- Built app/binary: `dist/`
-- Distributable archive: `release/`
+- `--dry-run`: analyse sans ecriture de fichier
+- `--no-redact-certs`: ne pas caviarder les certificats
+- `--no-redact-public-keys`: ne pas caviarder les cles SSH publiques
+- `--force-overwrite`: ecraser `*_sanitized` sans confirmation
+- `--verbose`: afficher l'etat detaille
+- `--self-test`: lancer les auto-tests integres
 
-Expected artifacts by platform:
+Nom de sortie:
 
-- Windows: `ConfigSanitizer.exe` inside `.zip`
-- macOS: `ConfigSanitizer.app` inside `.tar.gz`
-- Linux: `ConfigSanitizer` inside `.tar.gz`
+- entree: `config.yaml`
+- sortie: `config_sanitized.yaml`
 
-End users can extract and double-click the app/binary, no terminal needed.
+## Exemple de resultat
 
-## Auto-Build for Windows/macOS/Linux (GitHub Actions)
+Entree:
 
-Workflow file:
+```yaml
+dbPassword: supersecret
+owner_email: user@example.com
+api_url: https://api.example.com/v1
+```
 
-- `.github/workflows/build-executables.yml`
+Sortie:
 
-Trigger options:
+```yaml
+dbPassword: <REDACTED>
+owner_email: <REDACTED>
+api_url: https://<REDACTED>/v1
+```
 
-- Manual run (`workflow_dispatch`)
-- Automatic on git tag push (`v*`, for example `v0.1.0`)
+## Tests
 
-Each run uploads three artifacts (Windows/macOS/Linux) in GitHub Actions.
+Tests unitaires:
 
-## Self-test
+```bash
+python -m unittest -v tests/test_sanitizer.py
+```
+
+Self-test rapide:
 
 ```bash
 python sanitize.py --self-test
 ```
 
-## Publish to PyPI
+## Build executables desktop
+
+Installer les dependances packaging:
 
 ```bash
-python -m pip install build twine
-python -m build
-python -m twine check dist/*
-python -m twine upload dist/*
+python -m pip install .[packaging]
 ```
 
-## Notes for Distribution
+Generer les executables pour l'OS courant:
 
-- macOS: unsigned apps can show Gatekeeper warnings until code-signed/notarized.
-- Windows: unsigned `.exe` can trigger SmartScreen warnings.
-- Linux: ensure executable bit is preserved after extraction (`chmod +x ConfigSanitizer` if needed).
+```bash
+python scripts/build_executable.py
+```
 
-## Security Note
+Sorties:
 
-Before publishing:
+- binaire/app: `dist/`
+- archive distribuable: `release/`
 
-1. Run tests and self-tests
-1. Scan repository content for accidental secrets
-1. Confirm no private data in sample files or report artifacts
+Artefacts attendus:
+
+- Windows: `ConfigSanitizer.exe` dans un `.zip`
+- macOS: `ConfigSanitizer.app` dans un `.tar.gz`
+- Linux: `ConfigSanitizer` dans un `.tar.gz`
+
+## Build automatique GitHub Actions
+
+Workflow:
+
+- `.github/workflows/build-executables.yml`
+
+Declenchement:
+
+- manuel (`workflow_dispatch`)
+- sur tag (`v*`, par exemple `v0.1.0`)
+
+## Bonnes pratiques avant partage
+
+1. Faire un `--dry-run` si le fichier est critique.
+2. Ouvrir le fichier de sortie et verifier les sections sensibles.
+3. Verifier le log de remplacements (contexte masque).
+4. Ne jamais publier un extrait non relu.
+

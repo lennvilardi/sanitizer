@@ -90,6 +90,11 @@ def main() -> int:
     if system_name in {"Windows", "Linux"}:
         pyinstaller_cmd.append("--onefile")
 
+    data_separator = ";" if system_name == "Windows" else ":"
+    assets_dir = root / "assets"
+    if assets_dir.exists():
+        pyinstaller_cmd.extend(["--add-data", f"{assets_dir}{data_separator}assets"])
+
     pyinstaller_cmd.append(str(entrypoint))
     run(pyinstaller_cmd, cwd=root)
 
